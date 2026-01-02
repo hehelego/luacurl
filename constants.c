@@ -128,6 +128,9 @@ struct int_constant curl_int[] = {
 #if CURL_NEWER(7,19,3)
 	CURL(PROXY_HTTP_1_0),
 #endif
+#if CURL_NEWER(7,52,0)
+	CURL(PROXY_HTTPS),
+#endif
 	CURL(PROXY_SOCKS4),
 	CURL(PROXY_SOCKS5),
 	CURL(PROXY_SOCKS4A),
