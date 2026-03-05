@@ -137,6 +137,7 @@ extern struct int_constant curl_int[];
 	C_OPT(KRB4LEVEL, string) \
 	C_OPT(SSL_VERIFYPEER, boolean) \
 	C_OPT(CAINFO, string) \
+	C_OPT(CERTINFO, boolean) \
 	C_OPT(MAXREDIRS, number) \
 	C_OPT(FILETIME, boolean) \
 	C_OPT_SL(TELNETOPTIONS) \
@@ -476,7 +477,33 @@ lcurl_easy_getinfo(lua_State *L)
 
 	luaL_checktype(L, 2, LUA_TNUMBER);   /* accept info code number only */
 	nInfo=lua_tonumber(L, 2);
-	if (nInfo>CURLINFO_SLIST) {
+	if (nInfo==CURLINFO_CERTINFO) {
+		struct curl_certinfo *certinfo = NULL;
+		if (CURLE_OK ==
+		    (code = curl_easy_getinfo(c->curl, nInfo, &certinfo))) {
+			lua_newtable(L);
+			lua_pushliteral(L, "num_of_certs");
+			lua_pushinteger(L, certinfo->num_of_certs);
+			lua_settable(L, -3);
+			// push each certificate
+			int i;
+			for(i=0;i<certinfo->num_of_certs;i++) {
+				lua_pushinteger(L, i+1);
+				lua_newtable(L);
+				int j;
+				struct curl_slist *slist;
+				for(j=1, slist=certinfo->certinfo[i]; slist; j++, slist=slist->next) {
+					lua_pushinteger(L, j);
+					lua_pushstring(L, slist->data);
+					lua_settable(L, -3);
+				}
+				lua_settable(L, -3);
+			}
+			// TODO: figure out if one should call curl_slist_free_all() and curl_free()
+			return 1;
+		}else
+			;/* curl_easy_getinfo returns error */
+	}else if (nInfo>CURLINFO_SLIST) {
 		/* string list */
 		struct curl_slist *slist = 0;
 		if (CURLE_OK ==
